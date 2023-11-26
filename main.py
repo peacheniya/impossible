@@ -1,7 +1,9 @@
+import hashlib
+import gmpy2
+import random
+
 class ECPoint:
     gmpy2 = None
-    import gmpy2
-    import random
     
     class InvError(Exception):
         def __init__(self, *pargs):
@@ -90,15 +92,32 @@ def get_pub(priv_key):
     pub = priv_key * bp
     return pub.x, pub.y
 
+def generate_ethereum_address(public_key_x, public_key_y):
+    from Crypto.Hash import keccak
+    import binascii
+    
+    public_key_hex = f'{public_key_x:064x}{public_key_y:064x}'
+    public_key_bytes = bytes.fromhex(public_key_hex)
+
+    # Keccak-256 hash
+    keccak_hash = keccak.new(digest_bits=256)
+    keccak_hash.update(public_key_bytes)
+    keccak_digest = keccak_hash.digest()
+
+    # Ethereum address is the last 20 bytes of the hash
+    ethereum_address = '0x' + binascii.hexlify(keccak_digest[-20:]).decode('utf-8')
+
+    return ethereum_address
+
 def main():
-    import hashlib
     # priv_key = int(hashlib.sha3_256(b"Led Zeppelin - No Quarter").hexdigest(), 16)
-    priv_key = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-    # priv_key = 0xc0b279f18074de51d075b152c8ce78b7bddb284e8cfde19896162abec0a0acce
+    # priv_key = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+    priv_key = 0xb8dd40daa6cdad2821ee0976c0dd16c6583e89b953ea8df8f7a81b6b40b2b180
     print('priv key :', hex(priv_key))
     pubx, puby = get_pub(priv_key)
     print('pub key x:', hex(pubx))
     print('pub key y:', hex(puby))
+    print('address', generate_ethereum_address(pubx, puby))
 
 main()
 
